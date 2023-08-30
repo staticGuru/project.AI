@@ -4,14 +4,110 @@ import { BsBoxes } from "react-icons/bs";
 import { MdOutlineDescription, MdCall } from "react-icons/md";
 import { BiMessageDots } from "react-icons/bi";
 import { RiChatVoiceFill } from "react-icons/ri";
+import logo from "../assets/logo.png"; // Replace with your logo image file
+import userAvatar from "../assets/user.png"; // Replace with the user avatar image file
+import aiAvatar from "../assets/bot.jpg"; // Replace with the AI avatar image file
 
+function formatResponse(content) {
+  return content.split("```").map((part, index) => {
+    if (index % 2 === 0) {
+      return <span key={index}>{part}</span>;
+    } else {
+      return (
+        <pre key={index}>
+          <code>{part}</code>
+        </pre>
+      );
+    }
+  });
+}
 export function ChatSection({ transcript, voiceInput, setVoiceInput }) {
-  const [value, setValue] = useState("");
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([]);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+
+    // Add user message to the chat
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { role: "user", content: input },
+    ]);
+
+    try {
+      const response = await fetch(
+        "http://192.168.20.120:8000/v1/chat/completions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "vicuna-7b-v1.3",
+            messages: [...messages, { role: "user", content: input }],
+          }),
+        }
+      );
+
+      const data = await response.json();
+      const generatedResponse = data.choices[0].message.content;
+
+      // Add AI assistant response to the chat
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { role: "assistant", content: generatedResponse },
+      ]);
+
+      setInput("");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const renderMessages = () => {
+    return messages.map((message, index) => {
+      if (message.role === "user") {
+        return (
+          <div
+            key={index}
+            class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end"
+          >
+            <div>
+              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
+                <p class="text-sm">{formatResponse(message.content)}</p>
+              </div>
+              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
+            </div>
+            <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
+              <img src={userAvatar} alt="User Avatar" className="avatar" />
+            </div>
+          </div>
+        );
+      } else if (message.role === "assistant") {
+        return (
+          <div class="flex w-full mt-2 space-x-3 max-w-xs">
+            <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
+              <img src={aiAvatar} alt="AI Avatar" className="avatar" />
+            </div>
+            <div>
+              <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
+                <p class="text-sm">{formatResponse(message.content)}</p>
+              </div>
+              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
+            </div>
+          </div>
+        );
+      } else {
+        console.error(`Unknown role: ${message.role}`);
+        return null;
+      }
+    });
+  };
   return (
     <div class="flex flex-col items-center justify-center h-3/4 min-h-screen bg-transparent text-gray-800 mb-50">
       <div class="flex flex-col flex-grow w-[82rem] max-w-xl bg-transparent shadow-xl rounded-lg overflow-hidden">
         <div class="flex flex-col flex-grow h-0 p-4 overflow-auto">
-          <div class="flex w-full mt-2 space-x-3 max-w-xs">
+          {renderMessages()}
+          {/* <div class="flex w-full mt-2 space-x-3 max-w-xs">
             <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
             <div>
               <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
@@ -42,73 +138,7 @@ export function ChatSection({ transcript, voiceInput, setVoiceInput }) {
               <span class="text-xs text-gray-500 leading-none">2 min ago</span>
             </div>
             <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-          </div>
-          <div class="flex w-full mt-2 space-x-3 max-w-xs">
-            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-            <div>
-              <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
-                <p class="text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.{" "}
-                </p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
-            </div>
-          </div>
-          <div class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end">
-            <div>
-              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
-                <p class="text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.{" "}
-                </p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
-            </div>
-            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-          </div>
-          <div class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end">
-            <div>
-              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
-                <p class="text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt.
-                </p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
-            </div>
-            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-          </div>
-          <div class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end">
-            <div>
-              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
-                <p class="text-sm">Lorem ipsum dolor sit amet.</p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
-            </div>
-            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-          </div>
-          <div class="flex w-full mt-2 space-x-3 max-w-xs">
-            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-            <div>
-              <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
-                <p class="text-sm">
-                  Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.{" "}
-                </p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
-            </div>
-          </div>
-          <div class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end">
-            <div>
-              <div class="bg-blue-600 text-white p-3 rounded-l-lg rounded-br-lg">
-                <p class="text-sm">Lorem ipsum dolor sit.</p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
-            </div>
-            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-300"></div>
-          </div>
+  </div>*/}
         </div>
 
         <div className="bg-transparent p-4 flex justify-center gap-2">
@@ -116,10 +146,13 @@ export function ChatSection({ transcript, voiceInput, setVoiceInput }) {
             className="flex items-center h-10 w-full rounded-full outline-none px-3 text-sm"
             type="text"
             placeholder="Ask a question..."
-            value={transcript || value}
-            onChange={(text) => setValue(text)}
+            value={input} //transcript ||
+            onChange={(e) => setInput(e.target.value)}
           />
-          <button className="inline-flex items-center mt-1 justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-gray-400 rounded-full focus:shadow-outline hover:bg-gray-300">
+          <button
+            onClick={handleSendMessage}
+            className="inline-flex items-center mt-1 justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-gray-400 rounded-full focus:shadow-outline hover:bg-gray-300"
+          >
             <FaHandPaper color="black" />
           </button>
         </div>
