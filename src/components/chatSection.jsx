@@ -67,6 +67,20 @@ export function ChatSection({ transcript, voiceInput, setVoiceInput }) {
     return messages.map((message, index) => {
       if (message.role === "user") {
         return (
+          <div key={index} class="flex w-full mt-2 space-x-3 max-w-xs">
+            <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
+              <img src={userAvatar} alt="User Avatar" className="avatar" />
+            </div>
+            <div>
+              <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
+                <p class="text-sm">{formatResponse(message.content)}</p>
+              </div>
+              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
+            </div>
+          </div>
+        );
+      } else if (message.role === "assistant") {
+        return (
           <div
             key={index}
             class="flex w-full mt-2 space-x-3 max-w-xs ml-auto justify-end"
@@ -78,21 +92,7 @@ export function ChatSection({ transcript, voiceInput, setVoiceInput }) {
               <span class="text-xs text-gray-500 leading-none">2 min ago</span>
             </div>
             <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
-              <img src={userAvatar} alt="User Avatar" className="avatar" />
-            </div>
-          </div>
-        );
-      } else if (message.role === "assistant") {
-        return (
-          <div class="flex w-full mt-2 space-x-3 max-w-xs">
-            <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
               <img src={aiAvatar} alt="AI Avatar" className="avatar" />
-            </div>
-            <div>
-              <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
-                <p class="text-sm">{formatResponse(message.content)}</p>
-              </div>
-              <span class="text-xs text-gray-500 leading-none">2 min ago</span>
             </div>
           </div>
         );
