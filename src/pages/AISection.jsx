@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { ChatSection } from "../components/chatSection";
 import "./../style/styles.css";
 import VoiceInput from "../assets/voice.gif";
@@ -16,29 +16,43 @@ export function AISection() {
     resetTranscript,
     browserSupportsSpeechRecognition,
   } = useSpeechRecognition();
-
+  const chatRef = useRef();
   useEffect(() => {
-    document.addEventListener("keydown", handleKeyboardEvent);
+    document.addEventListener("keydown", (e) =>
+      !chatRef.current.isFocused() ? handleKeyboardEvent(e) : null
+    );
     return () => {
-      document.removeEventListener("keydown", handleKeyboardEvent);
+      document.removeEventListener("keydown", (e) =>
+        !chatRef?.current?.isFocused() ? handleKeyboardEvent(e) : null
+      );
     };
   }, []);
   function handleKeyboardEvent(key) {
     console.log(key);
     if (key.keyCode === 86) {
-      setVoiceInput(true);
-      SpeechRecognition.startListening({ continuous: true });
-    } else if (key.keyCode === 78) {
-      setNarrativeMode(true);
-    } else if (key.keyCode === 83) {
-      setVoiceInput(false);
-      SpeechRecognition.stopListening();
+      handleVoiceInput();
+    }
+    //  else if (key.keyCode === 78) {
+    //   setNarrativeMode(true);
+    // }
+    else if (key.keyCode === 83) {
+      handleVoiceInput();
     } else {
       setVoiceInput(false);
       setNarrativeMode(false);
     }
   }
-  console.log("transscript", transcript);
+  function handleVoiceInput() {
+    console.log("DSfsdf", voiceInput);
+    if (voiceInput) {
+      setVoiceInput(false);
+      SpeechRecognition.stopListening();
+    } else {
+      setVoiceInput(true);
+      SpeechRecognition.startListening({ continuous: true });
+    }
+  }
+  console.log("listening==>", listening, transcript);
   if (!browserSupportsSpeechRecognition) {
     return <span>Browser doesn't support speech recognition.</span>;
   }
@@ -59,21 +73,18 @@ export function AISection() {
       <div className="chatSection flex z-50 absolute items-center justify-center bg-transparent">
         <ChatSection
           transcript={transcript}
+          handleVoiceInput={handleVoiceInput}
           voiceInput={voiceInput}
           setVoiceInput={setVoiceInput}
+          ref={chatRef}
         />
       </div>
+
       {voiceInput && (
         <div className="flex z-50 absolute right-0 top-0 bg-transparent transition-opacity ease-out duration-1000 opacity-100 ">
           <img src={VoiceInput} alt="my-gif" />
         </div>
       )}
-      {narrativeMode && (
-        <div className="flex z-50 absolute right-0 top-0 bg-transparent transition-opacity ease-out duration-1000 opacity-100 ">
-          <img src={NarrativeInput} alt="my-gif" />
-        </div>
-      )}
-    
     </>
   );
 }
