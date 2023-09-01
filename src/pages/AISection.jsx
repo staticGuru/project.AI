@@ -74,6 +74,7 @@ export function AISection() {
         <ChatSection
           transcript={transcript}
           handleVoiceInput={handleVoiceInput}
+          listening={listening}
           voiceInput={voiceInput}
           setVoiceInput={setVoiceInput}
           ref={chatRef}
