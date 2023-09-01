@@ -1,8 +1,16 @@
 import { useNavigate } from "react-router-dom";
 import "../style/styles.css";
+import { useEffect } from "react";
 
 export function Home() {
   const navigate = useNavigate();
+  useEffect(() => {
+    const video = document.querySelector("video");
+
+    video.onended = (event) => {
+      navigate("/chat");
+    };
+  }, []);
   return (
     <section className="relative h-screen flex flex-col items-center justify-center text-center text-white py-0 px-3">
       <div className="video-docker absolute top-0 left-0 w-full h-full overflow-hidden">
@@ -12,7 +20,7 @@ export function Home() {
           type="video/mp4"
           autoPlay
           muted
-          loop
+          id="videoContainer"
         ></video>
       </div>
       <div className="flex z-10 absolute top-0 mt-10">
