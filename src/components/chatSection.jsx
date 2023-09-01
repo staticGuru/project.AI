@@ -30,13 +30,15 @@ function formatResponse(content) {
   });
 }
 export const ChatSection = forwardRef(
-  ({ transcript, handleVoiceInput, voiceInput, setVoiceInput }, ref) => {
+  ({ transcript, handleVoiceInput, listening, setVoiceInput }, ref) => {
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState([]);
     const [narrativeMode, setNarrativeMode] = useState(false);
     const [isFocus, setIsFocus] = useState(false);
+    const [inputDisabled, setInputDisabled] = useState(true);
     const inputRef = useRef();
     const msg = new SpeechSynthesisUtterance();
+    const synth = window.speechSynthesis;
     msg.addEventListener("end", () => {
       setNarrativeMode(false);
     });
@@ -52,6 +54,9 @@ export const ChatSection = forwardRef(
           },
           isFocused() {
             return isFocus;
+          },
+          isNarrativeMode() {
+            return synth.speaking;
           },
         }; // the forwarded ref value
       },
@@ -151,14 +156,20 @@ export const ChatSection = forwardRef(
     // }
     function handleChatInput() {
       console.log("chat");
+      setInputDisabled(!inputDisabled);
     }
     function handleNarrativeInput() {
-      console.log("Narrative");
-      setNarrativeMode(true);
-      // msg.text="gurucignesh"
-      msg.text =
-        "Data Science is an interdisciplinary field that involves extracting knowledge and insights from large volumes of structured and unstructured data. It encompasses various stages, from data collection and cleaning to analysis and interpretation. Through advanced statistical and computational techniques, Data Science uncovers patterns, trends, and correlations that drive informed decision-making. Machine learning and predictive modeling are integral components, enabling the development of algorithms that make predictions based on historical data. ";
-      window.speechSynthesis.speak(msg);
+      console.log("Narrative", synth.speaking);
+      if (synth.speaking) {
+        synth.cancel();
+        setNarrativeMode(false);
+      } else {
+        setNarrativeMode(true);
+        msg.text =
+          "Data Science is an interdisciplinary field that involves extracting knowledge and insights from large volumes of structured and unstructured data. It encompasses various stages, from data collection and cleaning to analysis and interpretation. Through advanced statistical and computational techniques, Data Science uncovers patterns, trends, and correlations that drive informed decision-making. Machine learning and predictive modeling are integral components, enabling the development of algorithms that make predictions based on historical data. ";
+        // window.speechSynthesis.speak(msg);
+        synth.speak(msg);
+      }
     }
     return (
       <>
@@ -179,6 +190,7 @@ export const ChatSection = forwardRef(
                 }}
                 onBlur={() => setIsFocus(false)}
                 ref={inputRef}
+                disabled={inputDisabled}
                 onChange={(e) => setInput(e.target.value)}
               />
               <button
@@ -215,19 +227,25 @@ export const ChatSection = forwardRef(
                 onClick={() => handleVoiceInput()}
                 className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
               >
-                <span className="text-black font-bold">V</span>
+                <span className="text-black font-bold">
+                  {listening ? "Stop" : "V"}
+                </span>
               </button>
               <button
                 onClick={handleNarrativeInput}
                 className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
               >
-                <span className="text-black font-bold">N</span>
+                <span className="text-black font-bold">
+                  {synth?.speaking ? "Stop" : "N"}
+                </span>
               </button>
               <button
                 onClick={handleChatInput}
                 className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
               >
-                <span className="text-black font-bold">T</span>
+                <span className="text-black font-bold">
+                  {!inputDisabled ? "Stop" : "T"}
+                </span>
               </button>
             </div>
           </div>
