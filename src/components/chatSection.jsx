@@ -62,16 +62,19 @@ export const ChatSection = forwardRef(
           },
         }; // the forwarded ref value
       },
-      [isFocus,synth.speaking]
+      [isFocus, synth.speaking]
     );
     useEffect(() => {
       setInput(transcript);
+      return () => {
+        synth?.cancel();
+      };
     }, [transcript]);
     const handleSendMessage = async (e) => {
       e.preventDefault();
       let standAloneObj = messages.pop();
-      if(listening){
-        handleVoiceInput()
+      if (listening) {
+        handleVoiceInput();
       }
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -97,7 +100,7 @@ export const ChatSection = forwardRef(
         resetController();
         setInput("");
         setInputDisabled(true);
-        setNarrativeMode(false)
+        setNarrativeMode(false);
         // Add AI assistant response to the chat
         setMessages((prevMessages) => [
           ...prevMessages,
@@ -134,7 +137,7 @@ export const ChatSection = forwardRef(
                           value={input}
                           onFocus={() => {
                             setIsFocus(true);
-                            console.log("onfoucss")
+                            console.log("onfoucss");
                           }}
                           onBlur={() => setIsFocus(false)}
                           ref={inputRef}
@@ -207,7 +210,17 @@ export const ChatSection = forwardRef(
       if (synth.speaking) {
         synth.cancel();
         setNarrativeMode(false);
+        setMessages(messages.filter((message) => !message.narrativeMode));
       } else {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            role: "assistant",
+            content: "I will share some info about my organisations!!!",
+            narrativeMode: true,
+          },
+        ]);
+
         setNarrativeMode(true);
         msg.text =
           "Data Science is an interdisciplinary field that involves extracting knowledge and insights from large volumes of structured and unstructured data. It encompasses various stages, from data collection and cleaning to analysis and interpretation. Through advanced statistical and computational techniques, Data Science uncovers patterns, trends, and correlations that drive informed decision-making. Machine learning and predictive modeling are integral components, enabling the development of algorithms that make predictions based on historical data. ";
@@ -221,6 +234,25 @@ export const ChatSection = forwardRef(
           <div class="flex flex-col flex-grow w-[82rem] max-w-xl bg-transparent shadow-xl rounded-lg overflow-hidden">
             <div class="flex flex-col flex-grow h-0 p-4 overflow-auto">
               {renderMessages()}
+              {narrativeMode && (
+                <div>
+                  <video
+                    className="w-full h-1/2 absolute object-cover"
+                    src={require("../assets/employee-getting-customer-requirements.mp4")}
+                    type="video/mp4"
+                    autoPlay
+                    muted
+                    controls
+                    loop
+                    onPause={() => {
+                      synth.pause();
+                    }}
+                    onPlay={() => {
+                      synth.resume();
+                    }}
+                  ></video>
+                </div>
+              )}
             </div>
 
             {/* <div className="bg-transparent p-4 flex justify-center gap-2">
@@ -244,6 +276,7 @@ export const ChatSection = forwardRef(
                 <FaHandPaper color="black" />
               </button>
               </div>*/}
+
             <div class="p-1 flex gap-2 flex-row items-center justify-center">
               <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
                 <FaHome color="white" />
@@ -294,11 +327,11 @@ export const ChatSection = forwardRef(
             </div>
           </div>
         </div>
-        {narrativeMode && (
+        {/*narrativeMode && (
           <div className="flex z-50 absolute right-0 top-0 bg-transparent transition-opacity ease-out duration-1000 opacity-100 w-1/2">
             <img src={NarrativeInput} alt="my-gif" />
           </div>
-        )}
+        )*/}
       </>
     );
   }
