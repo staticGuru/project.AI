@@ -1,14 +1,19 @@
 import { useNavigate } from "react-router-dom";
 import "../style/styles.css";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function Home() {
   const navigate = useNavigate();
+  const [showModal, setShowModal] = useState(false);
+  const [chatName,setChatName]=useState("");
   useEffect(() => {
     const video = document.querySelector("video");
 
+    video.onplay = (event) => {
+      setShowModal(false);
+    };
     video.onended = (event) => {
-      navigate("/chat");
+      setShowModal(true);
     };
   }, []);
   return (
@@ -41,12 +46,33 @@ export function Home() {
           pariatur
         </h3>
       </div>
-      <div
-        className="flex z-10 absolute bottom-0 mb-10 right-10 cursor-pointer"
-        onClick={() => navigate("/chat")}
-      >
-        <h1 className="font-medium text-xl text-blue-600">skip -{">"}</h1>
-      </div>
+      {showModal && (
+        <div className="flex z-10 absolute bottom-40 right-10 cursor-pointer">
+          <div className="bg-gray-300 p-5 rounded-lg  text-gray-800">
+            <div className="mt-3 mb-3">
+              <p className="font-bold mb-3">What is name?</p>
+              <div>
+                <input
+                  type="text"
+                  id="first_name"
+                  value={chatName}
+                  onChange={e=>setChatName(e.target.value)}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                  placeholder="John"
+                  required
+                />
+              </div>
+            </div>
+            <button
+              onClick={() => navigate("/chat")}
+              disabled={chatName.trim()===""}
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+            >
+              Go to!
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
