@@ -31,19 +31,19 @@ export function AISection() {
     console.log(key);
     if (key.keyCode === 86) {
       handleVoiceInput();
-    } 
+    }
     //  else if (key.keyCode === 78) {
     //   setNarrativeMode(true);
     // }
     else if (key.keyCode === 83) {
       handleVoiceInput();
-    }else {
+    } else {
       setVoiceInput(false);
       setNarrativeMode(false);
     }
   }
   function handleVoiceInput() {
-    console.log("isFousec",chatRef?.current?.isFocused());
+    console.log("isFousec", chatRef?.current?.isFocused());
     if (voiceInput) {
       setVoiceInput(false);
       SpeechRecognition.stopListening();
@@ -63,7 +63,7 @@ export function AISection() {
         <div>
           <video
             className="w-1/2 h-screen absolute  object-cover"
-            src={require(".././assets/android.mp4")}
+            src={require(".././assets/working-businessman-on-laptop.mp4")}
             type="video/mp4"
             autoPlay
             muted
@@ -73,7 +73,7 @@ export function AISection() {
         <div>
           <video
             className="w-1/2 h-screen absolute object-cover"
-            src={require(".././assets/working-businessman-on-laptop.mp4")}
+            src={require(".././assets/android.mp4")}
             type="video/mp4"
             autoPlay
             muted
