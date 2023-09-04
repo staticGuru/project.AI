@@ -31,19 +31,19 @@ export function AISection() {
     console.log(key);
     if (key.keyCode === 86) {
       handleVoiceInput();
-    }
+    } 
     //  else if (key.keyCode === 78) {
     //   setNarrativeMode(true);
     // }
     else if (key.keyCode === 83) {
       handleVoiceInput();
-    } else {
+    }else {
       setVoiceInput(false);
       setNarrativeMode(false);
     }
   }
   function handleVoiceInput() {
-    console.log("DSfsdf", voiceInput);
+    console.log("isFousec",chatRef?.current?.isFocused());
     if (voiceInput) {
       setVoiceInput(false);
       SpeechRecognition.stopListening();
@@ -58,9 +58,29 @@ export function AISection() {
     return <span>Browser doesn't support speech recognition.</span>;
   }
   return (
-    <>
-      <div className="AIsection grid grid-cols-2 divide-x h-screen">
-        <div
+    <div className="overflow-hidden">
+      <div className="AIsection grid grid-cols-2 divide-x bg-red-500">
+        <div>
+          <video
+            className="w-1/2 h-screen absolute  object-cover"
+            src={require(".././assets/android.mp4")}
+            type="video/mp4"
+            autoPlay
+            muted
+            loop
+          ></video>
+        </div>
+        <div>
+          <video
+            className="w-1/2 h-screen absolute object-cover"
+            src={require(".././assets/working-businessman-on-laptop.mp4")}
+            type="video/mp4"
+            autoPlay
+            muted
+            loop
+          ></video>
+        </div>
+        {/*<div
           className="h-full 
         bg-[url(https://images.unsplash.com/photo-1541178735493-479c1a27ed24?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTV8fHVzZXIlMjB0eXBlcyUyMGluJTIwbGFwdG9wfGVufDB8fDB8fHww&auto=format&w=500&q=60)] 
         bg-no-repeat bg-cover bg-center"
@@ -69,7 +89,7 @@ export function AISection() {
           className="h-full 
       bg-[url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4QoMAhQUbuSk1aNfPpHotjCnx4KVEuti6TQ&usqp=CAU)] 
       bg-no-repeat bg-cover bg-center "
-        />
+  />*/}
       </div>
       <div className="chatSection flex z-50 absolute items-center justify-center bg-transparent">
         <ChatSection
@@ -88,6 +108,6 @@ export function AISection() {
           <img src={VoiceInput} alt="my-gif" />
         </div>
       )}
-    </>
+    </div>
   );
 }
