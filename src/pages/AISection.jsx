@@ -19,7 +19,7 @@ export function AISection() {
   const chatRef = useRef();
   useEffect(() => {
     document.addEventListener("keydown", (e) =>
-      !chatRef.current.isFocused() ? handleKeyboardEvent(e) : null
+      !chatRef?.current?.isFocused() ? handleKeyboardEvent(e) : null
     );
     return () => {
       document.removeEventListener("keydown", (e) =>
@@ -52,6 +52,7 @@ export function AISection() {
       SpeechRecognition.startListening({ continuous: true });
     }
   }
+
   console.log("listening==>", listening, transcript);
   if (!browserSupportsSpeechRecognition) {
     return <span>Browser doesn't support speech recognition.</span>;
@@ -77,6 +78,7 @@ export function AISection() {
           listening={listening}
           voiceInput={voiceInput}
           setVoiceInput={setVoiceInput}
+          resetController={resetTranscript}
           ref={chatRef}
         />
       </div>
