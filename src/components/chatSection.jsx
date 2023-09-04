@@ -9,7 +9,7 @@ import { FaHandPaper, FaHome, FaLightbulb, FaClock } from "react-icons/fa";
 import { BsBoxes } from "react-icons/bs";
 import { MdOutlineDescription, MdCall } from "react-icons/md";
 import { BiMessageDots } from "react-icons/bi";
-import { RiChatVoiceFill } from "react-icons/ri";
+import { BsSendCheckFill } from "react-icons/bs";
 import logo from "../assets/logo.png"; // Replace with your logo image file
 import userAvatar from "../assets/user.png"; // Replace with the user avatar image file
 import aiAvatar from "../assets/bot.jpg"; // Replace with the AI avatar image file
@@ -30,9 +30,11 @@ function formatResponse(content) {
   });
 }
 export const ChatSection = forwardRef(
-  ({ transcript, handleVoiceInput, listening, setVoiceInput }, ref) => {
+  ({ transcript, handleVoiceInput, listening, resetController }, ref) => {
     const [input, setInput] = useState("");
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState([
+      { role: "user", content: "", standAloneInput: true },
+    ]);
     const [narrativeMode, setNarrativeMode] = useState(false);
     const [isFocus, setIsFocus] = useState(false);
     const [inputDisabled, setInputDisabled] = useState(true);
@@ -67,13 +69,14 @@ export const ChatSection = forwardRef(
     }, [transcript]);
     const handleSendMessage = async (e) => {
       e.preventDefault();
-
-      // Add user message to the chat
+      let standAloneObj = messages.pop();
+      if(listening){
+        handleVoiceInput()
+      }
       setMessages((prevMessages) => [
         ...prevMessages,
         { role: "user", content: input },
       ]);
-
       try {
         const response = await fetch(
           "http://192.168.20.120:8000/v1/chat/completions",
@@ -91,14 +94,16 @@ export const ChatSection = forwardRef(
 
         const data = await response.json();
         const generatedResponse = data.choices[0].message.content;
-
+        resetController();
+        setInput("");
+        setInputDisabled(true);
+        setNarrativeMode(false)
         // Add AI assistant response to the chat
         setMessages((prevMessages) => [
           ...prevMessages,
           { role: "assistant", content: generatedResponse },
+          standAloneObj,
         ]);
-
-        setInput("");
       } catch (error) {
         console.error(error);
       }
@@ -106,6 +111,48 @@ export const ChatSection = forwardRef(
     const renderMessages = () => {
       return messages.map((message, index) => {
         if (message.role === "user") {
+          if (message?.standAloneInput) {
+            return (
+              (transcript || !inputDisabled) && (
+                <div key={index} class="flex w-full mt-2 space-x-3 max-w-xs">
+                  <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
+                    <img
+                      src={userAvatar}
+                      alt="User Avatar"
+                      className="avatar"
+                    />
+                  </div>
+                  <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
+                    <p class="text-sm">
+                      {inputDisabled ? (
+                        <Typewriter text={transcript || ""} delay={50} />
+                      ) : (
+                        <input
+                          className="flex items-center h-10 w-full bg-transparent outline-none px-3 text-sm"
+                          type="text"
+                          placeholder="Ask a question..."
+                          value={input}
+                          // onFocus={() => {
+                          //   setIsFocus(true);
+                          // }}
+                          // onBlur={() => setIsFocus(false)}
+                          ref={inputRef}
+                          disabled={inputDisabled}
+                          onChange={(e) => setInput(e.target.value)}
+                        />
+                      )}
+                    </p>
+                  </div>
+                  <div
+                    class="bg-transparent pl-0 cursor-pointer justify-end items-end mt-3"
+                    onClick={handleSendMessage}
+                  >
+                    <BsSendCheckFill color="lightblue" size={26} />
+                  </div>
+                </div>
+              )
+            );
+          }
           return (
             <div key={index} class="flex w-full mt-2 space-x-3 max-w-xs">
               <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
@@ -133,7 +180,7 @@ export const ChatSection = forwardRef(
                   style={{ minWidth: "300px" }}
                 >
                   <p class="text-sm">
-                    <Typewriter text={message.content} delay={50} />
+                    <Typewriter text={message.content} delay={25} />
                   </p>
                 </div>
                 <span class="text-xs text-gray-500 leading-none">
@@ -151,11 +198,7 @@ export const ChatSection = forwardRef(
         }
       });
     };
-    // function handleVoiceInput(){
-    //   handleVoiceInput()
-    // }
     function handleChatInput() {
-      console.log("chat");
       setInputDisabled(!inputDisabled);
     }
     function handleNarrativeInput() {
@@ -179,7 +222,7 @@ export const ChatSection = forwardRef(
               {renderMessages()}
             </div>
 
-            <div className="bg-transparent p-4 flex justify-center gap-2">
+            {/* <div className="bg-transparent p-4 flex justify-center gap-2">
               <input
                 className="flex items-center h-10 w-full rounded-full outline-none px-3 text-sm"
                 type="text"
@@ -199,29 +242,29 @@ export const ChatSection = forwardRef(
               >
                 <FaHandPaper color="black" />
               </button>
-            </div>
-            <div class="bg-gray-200 p-1 flex gap-2 flex-row items-center justify-center">
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <FaHome color="black" />
+              </div>*/}
+            <div class="p-1 flex gap-2 flex-row items-center justify-center">
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <FaHome color="white" />
               </button>
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <BsBoxes color="black" />
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <BsBoxes color="white" />
               </button>
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <FaLightbulb color="black" />
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <FaLightbulb color="white" />
               </button>
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <BiMessageDots color="black" />
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <BiMessageDots color="white" />
               </button>
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <MdOutlineDescription color="black" />
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <MdOutlineDescription color="white" />
               </button>
 
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <MdCall color="black" />
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <MdCall color="white" />
               </button>
-              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300">
-                <FaClock color="black" />
+              <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
+                <FaClock color="white" />
               </button>
               <button
                 onClick={() => handleVoiceInput()}
