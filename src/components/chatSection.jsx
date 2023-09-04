@@ -62,7 +62,7 @@ export const ChatSection = forwardRef(
           },
         }; // the forwarded ref value
       },
-      []
+      [isFocus,synth.speaking]
     );
     useEffect(() => {
       setInput(transcript);
@@ -132,10 +132,11 @@ export const ChatSection = forwardRef(
                           type="text"
                           placeholder="Ask a question..."
                           value={input}
-                          // onFocus={() => {
-                          //   setIsFocus(true);
-                          // }}
-                          // onBlur={() => setIsFocus(false)}
+                          onFocus={() => {
+                            setIsFocus(true);
+                            console.log("onfoucss")
+                          }}
+                          onBlur={() => setIsFocus(false)}
                           ref={inputRef}
                           disabled={inputDisabled}
                           onChange={(e) => setInput(e.target.value)}
