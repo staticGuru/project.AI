@@ -1,4 +1,5 @@
 import React, {
+  Fragment,
   forwardRef,
   useEffect,
   useImperativeHandle,
@@ -111,6 +112,12 @@ export const ChatSection = forwardRef(
         console.error(error);
       }
     };
+    const handleKeyDown = (event) => {
+      // event.preventDefault();
+      if (event.key === "Enter" && input.trim() !== "") {
+        handleSendMessage(event);
+      }
+    };
     const renderMessages = () => {
       return messages.map((message, index) => {
         if (message.role === "user") {
@@ -128,7 +135,12 @@ export const ChatSection = forwardRef(
                   <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
                     <p class="text-sm">
                       {inputDisabled ? (
-                        <Typewriter text={transcript || ""} delay={50} />
+                        <Typewriter
+                          text={transcript || ""}
+                          delay={50}
+                          isUser={true}
+                          onKeyDown={handleKeyDown}
+                        />
                       ) : (
                         <input
                           className="flex items-center h-10 w-full bg-transparent outline-none px-3 text-sm"
@@ -142,16 +154,11 @@ export const ChatSection = forwardRef(
                           onBlur={() => setIsFocus(false)}
                           ref={inputRef}
                           disabled={inputDisabled}
+                          onKeyDown={handleKeyDown}
                           onChange={(e) => setInput(e.target.value)}
                         />
                       )}
                     </p>
-                  </div>
-                  <div
-                    class="bg-transparent pl-0 cursor-pointer justify-end items-end mt-3"
-                    onClick={handleSendMessage}
-                  >
-                    <BsSendCheckFill color="lightblue" size={26} />
                   </div>
                 </div>
               )
@@ -166,9 +173,6 @@ export const ChatSection = forwardRef(
                 <div class="bg-gray-300 p-3 rounded-r-lg rounded-bl-lg">
                   <p class="text-sm">{formatResponse(message.content)}</p>
                 </div>
-                <span class="text-xs text-gray-500 leading-none">
-                  2 min ago
-                </span>
               </div>
             </div>
           );
@@ -184,12 +188,24 @@ export const ChatSection = forwardRef(
                   style={{ minWidth: "300px" }}
                 >
                   <p class="text-sm">
-                    <Typewriter text={message.content} delay={25} />
+                    <Typewriter text={message.content} isUser={false} delay={25} />
                   </p>
+                  {message?.action?.length !== 0 && (
+                    <div className="flex gap-3 px-8 mt-2">
+                      {message?.action?.map((action, index) => {
+                        return (
+                          <button
+                            key={index}
+                            onClick={action.onClick}
+                            className="bg-slate-300 text-black font-bold p-2 px-8 rounded-md hover:bg-slate-400"
+                          >
+                            {action.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-                <span class="text-xs text-gray-500 leading-none">
-                  2 min ago
-                </span>
               </div>
               <div class="flex-shrink-0 h-8 w-8 rounded-full overflow-hidden bg-gray-300">
                 <img src={aiAvatar} alt="AI Avatar" className="avatar" />
@@ -205,28 +221,49 @@ export const ChatSection = forwardRef(
     function handleChatInput() {
       setInputDisabled(!inputDisabled);
     }
-    function handleNarrativeInput() {
+    function renderVideoPlayer() {
       console.log("Narrative", synth.speaking);
       if (synth.speaking) {
         synth.cancel();
         setNarrativeMode(false);
         setMessages(messages.filter((message) => !message.narrativeMode));
       } else {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          {
-            role: "assistant",
-            content: "I will share some info about my organisations!!!",
-            narrativeMode: true,
-          },
-        ]);
-
         setNarrativeMode(true);
         msg.text =
           "Data Science is an interdisciplinary field that involves extracting knowledge and insights from large volumes of structured and unstructured data. It encompasses various stages, from data collection and cleaning to analysis and interpretation. Through advanced statistical and computational techniques, Data Science uncovers patterns, trends, and correlations that drive informed decision-making. Machine learning and predictive modeling are integral components, enabling the development of algorithms that make predictions based on historical data. ";
         // window.speechSynthesis.speak(msg);
         synth.speak(msg);
       }
+    }
+    function removeNarrativeMessage() {
+      synth.cancel();
+      setNarrativeMode(false);
+      setMessages(messages.filter((e) => !e?.narrativeMode));
+    }
+    function handleNarrativeInput() {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          role: "assistant",
+          content:
+            "Looks like you've chosen the option to narrate. Would you still want me to narrate the contents of the website?",
+          narrativeMode: true,
+          action: [
+            {
+              label: "YES",
+              onClick: () => {
+                renderVideoPlayer();
+              },
+            },
+            {
+              label: "NO",
+              onClick: () => {
+                removeNarrativeMessage();
+              },
+            },
+          ],
+        },
+      ]);
     }
     return (
       <>
@@ -300,30 +337,36 @@ export const ChatSection = forwardRef(
               <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
                 <FaClock color="white" />
               </button>
-              <button
-                onClick={() => handleVoiceInput()}
-                className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
-              >
-                <span className="text-black font-bold">
-                  {listening ? "Stop" : "V"}
-                </span>
-              </button>
-              <button
-                onClick={handleNarrativeInput}
-                className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
-              >
-                <span className="text-black font-bold">
-                  {synth?.speaking ? "Stop" : "N"}
-                </span>
-              </button>
-              <button
-                onClick={handleChatInput}
-                className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
-              >
-                <span className="text-black font-bold">
-                  {!inputDisabled ? "Stop" : "T"}
-                </span>
-              </button>
+              {!inputDisabled || synth?.speaking ? null : (
+                <button
+                  onClick={() => handleVoiceInput()}
+                  className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
+                >
+                  <span className="text-black font-bold">
+                    {listening ? "Stop" : "V"}
+                  </span>
+                </button>
+              )}
+              {listening || !inputDisabled ? null : (
+                <button
+                  onClick={handleNarrativeInput}
+                  className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
+                >
+                  <span className="text-black font-bold">
+                    {synth?.speaking ? "Stop" : "N"}
+                  </span>
+                </button>
+              )}
+              {synth?.speaking || listening ? null : (
+                <button
+                  onClick={handleChatInput}
+                  className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
+                >
+                  <span className="text-black font-bold">
+                    {!inputDisabled ? "Stop" : "T"}
+                  </span>
+                </button>
+              )}
             </div>
           </div>
         </div>
