@@ -28,7 +28,6 @@ export function AISection() {
     };
   }, []);
   function handleKeyboardEvent(key) {
-    console.log(key);
     if (key.keyCode === 86) {
       handleVoiceInput();
     }
