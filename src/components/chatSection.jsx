@@ -65,6 +65,12 @@ export const ChatSection = forwardRef(
           isNarrativeMode() {
             return synth.speaking;
           },
+          handleNarrativeInput() {
+            return handleNarrativeInput();
+          },
+          handleChatInput() {
+            return handleChatInput();
+          },
         }; // the forwarded ref value
       },
       [isFocus, synth.speaking]
@@ -257,7 +263,7 @@ export const ChatSection = forwardRef(
     function removeNarrativeMessage() {
       synth.cancel();
       setNarrativeMode(false);
-      setMessages(messages.filter((e) => !e?.narrativeMode));
+      // setMessages(messages.filter((e) => !e?.narrativeMode));
     }
     function handleNarrativeInput() {
       console.log("onclidded");
