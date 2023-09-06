@@ -28,22 +28,28 @@ export function AISection() {
     };
   }, []);
   function handleKeyboardEvent(key) {
+    console.log("pressedKey", key, key.keyCode);
     if (key.keyCode === 86) {
       handleVoiceInput();
-    }
-    //  else if (key.keyCode === 78) {
-    //   setNarrativeMode(true);
-    // }
-    else if (key.keyCode === 83) {
-      handleVoiceInput();
-    } else {
+    } else if (key.keyCode === 83) {
+      // handleVoiceInput();
       setVoiceInput(false);
-      setNarrativeMode(false);
+      SpeechRecognition.stopListening();
+    } else if (key.keyCode === 78) {
+      chatRef?.current?.handleNarrativeInput();
+    } else if (key.keyCode === 84) {
+      console.log("T");
+      chatRef?.current?.handleChatInput();
     }
+    //  else {
+    //   setVoiceInput(false);
+    //   setNarrativeMode(false);
+    // }
   }
   function handleVoiceInput() {
-    console.log("isFousec", chatRef?.current?.isFocused());
-    if (voiceInput) {
+    console.log("isFousec", listening, chatRef?.current?.isFocused());
+    // if (voiceInput) {
+    if (listening) {
       setVoiceInput(false);
       SpeechRecognition.stopListening();
     } else {
@@ -51,14 +57,14 @@ export function AISection() {
       SpeechRecognition.startListening({ continuous: true });
     }
   }
-  function handleReset(){
+  function handleReset() {
     resetTranscript();
     setVoiceInput(true);
-      SpeechRecognition.startListening({ continuous: true });
+    SpeechRecognition.startListening({ continuous: true });
   }
 
-  console.log("listening==>",voiceInput);
-  // debugger;
+  console.log("listening==>", voiceInput);
+  // listening ||
 
   if (!browserSupportsSpeechRecognition) {
     return <span>Browser doesn't support speech recognition.</span>;
@@ -108,8 +114,7 @@ export function AISection() {
           ref={chatRef}
         />
       </div>
-
-      {listening && (
+      {voiceInput && (
         <div className="flex z-50 absolute right-0 top-0 bg-transparent transition-opacity ease-out duration-1000 opacity-100 ">
           <img src={VoiceInput} alt="my-gif" />
         </div>
