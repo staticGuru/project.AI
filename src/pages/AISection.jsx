@@ -51,8 +51,15 @@ export function AISection() {
       SpeechRecognition.startListening({ continuous: true });
     }
   }
+  function handleReset(){
+    resetTranscript();
+    setVoiceInput(true);
+      SpeechRecognition.startListening({ continuous: true });
+  }
 
-  console.log("listening==>", listening, transcript);
+  console.log("listening==>",voiceInput);
+  // debugger;
+
   if (!browserSupportsSpeechRecognition) {
     return <span>Browser doesn't support speech recognition.</span>;
   }
@@ -97,12 +104,12 @@ export function AISection() {
           listening={listening}
           voiceInput={voiceInput}
           setVoiceInput={setVoiceInput}
-          resetController={resetTranscript}
+          resetController={handleReset}
           ref={chatRef}
         />
       </div>
 
-      {voiceInput && (
+      {listening && (
         <div className="flex z-50 absolute right-0 top-0 bg-transparent transition-opacity ease-out duration-1000 opacity-100 ">
           <img src={VoiceInput} alt="my-gif" />
         </div>
