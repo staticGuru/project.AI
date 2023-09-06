@@ -6,16 +6,15 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { FaHandPaper, FaHome, FaLightbulb, FaClock } from "react-icons/fa";
+import { FaHome, FaLightbulb, FaClock } from "react-icons/fa";
 import { BsBoxes } from "react-icons/bs";
 import { MdOutlineDescription, MdCall } from "react-icons/md";
 import { BiMessageDots } from "react-icons/bi";
-import { BsSendCheckFill } from "react-icons/bs";
-import logo from "../assets/logo.png"; // Replace with your logo image file
 import userAvatar from "../assets/user.png"; // Replace with the user avatar image file
 import aiAvatar from "../assets/bot.jpg"; // Replace with the AI avatar image file
 import { Typewriter } from "./typeWriter";
 import NarrativeInput from "../assets/speak.gif";
+import { Box, Modal } from "@mui/material";
 
 function formatResponse(content) {
   return content.split("```").map((part, index) => {
@@ -33,9 +32,14 @@ function formatResponse(content) {
 export const ChatSection = forwardRef(
   ({ transcript, handleVoiceInput, listening, resetController }, ref) => {
     const [input, setInput] = useState("");
-    const [messages, setMessages] = useState([
-      { role: "user", content: "", standAloneInput: true },
-    ]);
+    const [open, setOpen] = React.useState(false);
+    const handleOpen = () => setOpen(true);
+    const standAloneInputObj = {
+      role: "user",
+      content: "",
+      standAloneInput: true,
+    };
+    const [messages, setMessages] = useState([standAloneInputObj]);
     const [narrativeMode, setNarrativeMode] = useState(false);
     const [isFocus, setIsFocus] = useState(false);
     const [inputDisabled, setInputDisabled] = useState(true);
@@ -75,7 +79,11 @@ export const ChatSection = forwardRef(
       e.preventDefault();
       let standAloneObj = messages.pop();
       if (listening) {
-        handleVoiceInput();
+        // handleVoiceInput();
+        // setTimeout(() => {
+        //   handleVoiceInput();
+        // }, 0);
+        resetController();
       }
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -91,23 +99,28 @@ export const ChatSection = forwardRef(
             },
             body: JSON.stringify({
               model: "vicuna-7b-v1.3",
-              messages: [...messages, { role: "user", content: input }],
+              messages: [
+                ...messages?.filter((e) => !e.narrativeMode),
+                { role: "user", content: input },
+              ],
             }),
           }
         );
 
         const data = await response.json();
         const generatedResponse = data.choices[0].message.content;
-        resetController();
+        // resetController();
         setInput("");
-        setInputDisabled(true);
-        setNarrativeMode(false);
-        // Add AI assistant response to the chat
+        // setInputDisabled(true);
+        // setNarrativeMode(false);
         setMessages((prevMessages) => [
           ...prevMessages,
           { role: "assistant", content: generatedResponse },
           standAloneObj,
         ]);
+        if (!(synth?.speaking || listening)) {
+          setInputDisabled(false);
+        }
       } catch (error) {
         console.error(error);
       }
@@ -151,6 +164,7 @@ export const ChatSection = forwardRef(
                             setIsFocus(true);
                             console.log("onfoucss");
                           }}
+                          autoFocus={true}
                           onBlur={() => setIsFocus(false)}
                           ref={inputRef}
                           disabled={inputDisabled}
@@ -188,7 +202,11 @@ export const ChatSection = forwardRef(
                   style={{ minWidth: "300px" }}
                 >
                   <p class="text-sm">
-                    <Typewriter text={message.content} isUser={false} delay={25} />
+                    <Typewriter
+                      text={message.content}
+                      isUser={false}
+                      delay={25}
+                    />
                   </p>
                   {message?.action?.length !== 0 && (
                     <div className="flex gap-3 px-8 mt-2">
@@ -219,6 +237,7 @@ export const ChatSection = forwardRef(
       });
     };
     function handleChatInput() {
+      // setMessages((prevMessages) => [...prevMessages, standAloneObj]);
       setInputDisabled(!inputDisabled);
     }
     function renderVideoPlayer() {
@@ -241,17 +260,21 @@ export const ChatSection = forwardRef(
       setMessages(messages.filter((e) => !e?.narrativeMode));
     }
     function handleNarrativeInput() {
-      setMessages((prevMessages) => [
-        ...prevMessages,
+      console.log("onclidded");
+
+      setMessages([
+        ...messages.filter((e) => !e.standAloneInput),
         {
           role: "assistant",
           content:
             "Looks like you've chosen the option to narrate. Would you still want me to narrate the contents of the website?",
           narrativeMode: true,
+          isActionEnabled: true,
           action: [
             {
               label: "YES",
               onClick: () => {
+                handleOpen();
                 renderVideoPlayer();
               },
             },
@@ -263,56 +286,88 @@ export const ChatSection = forwardRef(
             },
           ],
         },
+        standAloneInputObj,
       ]);
     }
+
+    const style = {
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: 400,
+      height: 400,
+      bgcolor: "background.paper",
+      border: "2px solid #000",
+      borderRadius: "5px",
+      overflow: "hidden",
+      boxShadow: 24,
+    };
+    function handleClose() {
+      removeNarrativeMessage();
+      setOpen(false);
+    }
+
     return (
       <>
         <div class="flex flex-col items-center justify-center h-3/4 min-h-screen bg-transparent text-gray-800 mb-50">
           <div class="flex flex-col flex-grow w-[82rem] max-w-xl bg-transparent shadow-xl rounded-lg overflow-hidden">
             <div class="flex flex-col flex-grow h-0 p-4 overflow-auto">
               {renderMessages()}
-              {narrativeMode && (
-                <div>
-                  <video
-                    className="w-full h-1/2 absolute object-cover"
-                    src={require("../assets/employee-getting-customer-requirements.mp4")}
-                    type="video/mp4"
-                    autoPlay
-                    muted
-                    controls
-                    loop
-                    onPause={() => {
-                      synth.pause();
-                    }}
-                    onPlay={() => {
-                      synth.resume();
-                    }}
-                  ></video>
-                </div>
-              )}
+
+              <Modal
+                open={open}
+                onClose={handleClose}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+              >
+                <Box sx={style}>
+                  {narrativeMode && (
+                    <div>
+                      <video
+                        className="w-full h-full absolute object-cover"
+                        src={require("../assets/employee-getting-customer-requirements.mp4")}
+                        type="video/mp4"
+                        autoPlay
+                        muted
+                        controls
+                        loop
+                        onPause={() => {
+                          synth.pause();
+                        }}
+                        onPlay={() => {
+                          synth.resume();
+                        }}
+                      ></video>
+                    </div>
+                  )}
+                </Box>
+              </Modal>
             </div>
 
-            {/* <div className="bg-transparent p-4 flex justify-center gap-2">
-              <input
-                className="flex items-center h-10 w-full rounded-full outline-none px-3 text-sm"
-                type="text"
-                placeholder="Ask a question..."
-                value={input}
-                onFocus={() => {
-                  setIsFocus(true);
-                }}
-                onBlur={() => setIsFocus(false)}
-                ref={inputRef}
-                disabled={inputDisabled}
-                onChange={(e) => setInput(e.target.value)}
-              />
-              <button
+            {!(synth?.speaking || !inputDisabled) ? null : (
+              <div className="bg-transparent p-4 flex justify-center gap-2 opacity-50">
+                <input
+                  className="flex items-center h-10 w-full rounded-full outline-none px-3 text-sm"
+                  type="text"
+                  placeholder="Ask a question..."
+                  value={input}
+                  // onFocus={() => {
+                  //   setIsFocus(true);
+                  // }}
+                  // onBlur={() => setIsFocus(false)}
+                  // ref={inputRef}
+                  disabled={true}
+                  onChange={(e) => setInput(e.target.value)}
+                />
+                {/*<button
                 onClick={handleSendMessage}
                 className="inline-flex items-center mt-1 justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-gray-400 rounded-full focus:shadow-outline hover:bg-gray-300"
               >
                 <FaHandPaper color="black" />
-              </button>
-              </div>*/}
+              </button>*/}
+              </div>
+            )}
 
             <div class="p-1 flex gap-2 flex-row items-center justify-center">
               <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
@@ -337,36 +392,35 @@ export const ChatSection = forwardRef(
               <button className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-black rounded-md focus:shadow-outline hover:bg-gray-300">
                 <FaClock color="white" />
               </button>
-              {!inputDisabled || synth?.speaking ? null : (
-                <button
-                  onClick={() => handleVoiceInput()}
-                  className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
-                >
-                  <span className="text-black font-bold">
-                    {listening ? "Stop" : "V"}
-                  </span>
-                </button>
-              )}
-              {listening || !inputDisabled ? null : (
-                <button
-                  onClick={handleNarrativeInput}
-                  className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
-                >
-                  <span className="text-black font-bold">
-                    {synth?.speaking ? "Stop" : "N"}
-                  </span>
-                </button>
-              )}
-              {synth?.speaking || listening ? null : (
-                <button
-                  onClick={handleChatInput}
-                  className="inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 bg-white rounded-md focus:shadow-outline hover:bg-gray-300"
-                >
-                  <span className="text-black font-bold">
-                    {!inputDisabled ? "Stop" : "T"}
-                  </span>
-                </button>
-              )}
+              <button
+                onClick={() => handleVoiceInput()}
+                disabled={!inputDisabled || synth?.speaking}
+                className={`${
+                  !inputDisabled || synth?.speaking ? "bg-gray-400" : "bg-white"
+                } "inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 rounded-md focus:shadow-outline hover:bg-gray-300"`}
+              >
+                <span className="text-black font-bold">{"V"}</span>
+              </button>
+
+              <button
+                onClick={handleNarrativeInput}
+                disabled={listening || !inputDisabled}
+                className={`${
+                  listening || !inputDisabled ? "bg-gray-400" : "bg-white"
+                } "inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 rounded-md focus:shadow-outline hover:bg-gray-300"`}
+              >
+                <span className="text-black font-bold">{"N"}</span>
+              </button>
+
+              <button
+                onClick={handleChatInput}
+                disabled={synth?.speaking || listening}
+                className={`${
+                  synth?.speaking || listening ? "bg-gray-400" : "bg-white"
+                } "inline-flex items-center justify-center w-8 h-8 mr-2 text-pink-100 transition-colors duration-150 rounded-md focus:shadow-outline hover:bg-gray-300"`}
+              >
+                <span className="text-black font-bold">{"T"}</span>
+              </button>
             </div>
           </div>
         </div>
