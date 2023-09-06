@@ -34,6 +34,7 @@ export const Typewriter = ({
         placeholder=""
         value={currentText}
         onKeyDown={onKeyDown}
+        autoFocus={true}
       />
     );
   }
